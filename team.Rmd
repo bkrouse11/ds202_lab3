@@ -141,10 +141,15 @@ Respondents who gave no answer for their marital status had by far the highest a
 
 6. Explore two more interesting questions, and answer those questions using the GSS data.
 ```{r}
+data %>% filter(!is.na(`Ever work as long as one year`)) %>% group_by(`Ever work as long as one year`) %>% summarize(`Average years of education` = mean(`Highest year of school completed`, na.rm=TRUE)) %>%
+  arrange(desc(`Average years of education`))
+```
+
+```{r}
 data1 <- filter(data, `Ever work as long as one year` != "Don't know")
 data1 <- filter(data1, `Ever work as long as one year` != "No answer")
 data1 <- filter(data1, `Ever work as long as one year` != "Not applicable")
 ggplot(data1, aes(x = `Highest year of school completed`)) + geom_histogram() + facet_wrap(~`Ever work as long as one year`) + labs(x= "Highest Schooling", y = "Count", title = "Highest Schooling v. Being at a Career Longer than a Year")
 ```
 
-We can see from this histogram that individuals who have work at a job for longer than a year tend to have higher amounts of schooling completed. Also, the people who have worked at a career for longer than a year tend to have more than 12 years of education, equivalent to a high school diploma.
+We can see from this histogram that individuals who have work at a job for longer than a year tend to have higher amounts of schooling completed. We can see from the averages that the 'yes' group has an average equivalent to a high school diploma. The 'no' group has an average that is less than a high school diploma. The two groups 'not applicable' and 'no answer' have the highest average, but we don't know which category they fall under. Because of this, we can assume that people with higher years completed of education tend to have careers lasting longer than a year. 
