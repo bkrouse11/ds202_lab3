@@ -1,5 +1,6 @@
 ---
-title: "team"
+title: "Lab 3"
+author: "Brandon Rouse and Sam Reinart"
 output: html_document
 ---
 
@@ -7,22 +8,24 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r, include=FALSE}
+library(tidyverse)
+library(readxl)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+data <- suppressWarnings(read_xls("GSS.xls", sheet="Data"))
+data <- data %>% 
+  mutate(`Highest year of school completed` = suppressWarnings(as.numeric(`Highest year of school completed`)))
 ```
 
-## Including Plots
+## Exploration
+1. Find the average years of education for the respondents with each marital status. Arrange your output in a meaningful order and print. Describe any patterns you find.
 
-You can also embed plots, for example:
+2. Create a single data frame containing records for the better educated respondents with each marital status. A “better educated” respondent is someone who has strictly more years of education than the average among those with the same marital status. Print the structure of the data frame.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+3. How is the happiness of a respondent related to his/her marriage status? Define that a person is happy if the response to question is “Very happy” or “Pretty happy”.
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+4. Does party affiliation affect the relationship you found in the last question?
+
+5. How is marital status related to the education of a respondent? What are possible reasons accounting for the patterns you see?
+
+6. Explore two more interesting questions, and answer those questions using the GSS data.
