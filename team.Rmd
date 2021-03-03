@@ -20,12 +20,131 @@ data <- data %>%
 ## Exploration
 1. Find the average years of education for the respondents with each marital status. Arrange your output in a meaningful order and print. Describe any patterns you find.
 
+```{r}
+aveEdu <- data %>% 
+  filter(!is.na(`Marital status`)) %>%
+  group_by(`Marital status`) %>%
+  summarize(`Average years of education` = mean(`Highest year of school completed`, na.rm=TRUE)) %>%
+  arrange(desc(`Average years of education`))
+aveEdu
+
+data %>% 
+  filter(!is.na(`Marital status`)) %>%
+  group_by(`Marital status`) %>%
+  summarize(mean = mean(`Highest year of school completed`, na.rm=TRUE)) %>%
+  ggplot(aes(x=reorder(`Marital status`, -mean), weight=mean)) + 
+  geom_bar() + 
+  labs(title="Education Level By Marital Status", x="Marital Status", y="Average years of education")
+```
+
+Respondents who gave no answer for their marital status had by far the highest average level of education of 15.5 years. Those who were never married, divorced, or currently married all had around the same average level of education, 13.0, 13.1, and 13.4 years respectively. Respondents who were separated or widowed had the lowest average level of education, 11.9 and 11.2 years respectively. 
+
 2. Create a single data frame containing records for the better educated respondents with each marital status. A “better educated” respondent is someone who has strictly more years of education than the average among those with the same marital status. Print the structure of the data frame.
+
+```{r}
+betterEducated <- data %>%
+  filter(!is.na(`Marital status`)) %>%
+  group_by(`Marital status`) %>%
+  filter(`Highest year of school completed` > mean(`Highest year of school completed`, na.rm=TRUE)) %>%
+  ungroup()
+str(betterEducated)
+```
 
 3. How is the happiness of a respondent related to his/her marriage status? Define that a person is happy if the response to question is “Very happy” or “Pretty happy”.
 
+```{r}
+percHappy <- data %>%
+  filter(!is.na(`Marital status`)) %>%
+  mutate(Happy = ifelse(`General happiness` == "Very happy" | 
+                        `General happiness` == "Pretty happy", "Happy", "Unhappy")) %>%
+  group_by(`Marital status`) %>%
+  summarize(`Percentage of Happy Partners by Marital Status` = 
+            100 * length(Happy[which(Happy == "Happy")]) / n()) %>%
+  arrange(desc(`Percentage of Happy Partners by Marital Status`))
+percHappy
+
+data %>%
+  filter(!is.na(`Marital status`)) %>%
+  mutate(Happy = ifelse(`General happiness` == "Very happy" | 
+                        `General happiness` == "Pretty happy", "Happy", "Unhappy")) %>%
+  ggplot(aes(fill=Happy, x=factor(`Marital status`, levels=pull(percHappy, `Marital status`)))) + 
+  geom_bar(position="fill") + 
+  coord_flip() + 
+  labs(title="Percentage of Happy Partners by Marital Status", x="Marital Status", y="Percentage")
+```
+
+As shown in the tibble and graph, respondents who were married were by far the most happy group, where 86.0% of them were happy. The next happiest group was those who never married, where 77.2% of them were happy. These two groups are probably the happiest because either they are in a good marriage, or they aren't married to someone they don't like. The next 2 lowest groups were previously, but no longer, married to another person. The widowed and divorced groups had happiness percentages of 75.4% and 73.8%. It is likely that the happiness of these two groups is lower because they no longer have a significant other. The next lowest group was respondents who were currently separated, of which 66.3% were happy. It makes sense that these respondents would have a greater chance of being unhappy, if they are stuck in a marriage they don't want to be in. The group with the lowest happiness was those who gave no answer concerning their marital status, of which only 59.3% were happy.
+
 4. Does party affiliation affect the relationship you found in the last question?
+
+```{r}
+ind <- c("Independent", "Ind,near rep", "Ind,near dem")
+rep <- c("Strong republican", "Not str republican")
+dem <- c("Strong democrat", "Not str democrat")
+parties <- c(ind, rep, dem)
+
+data %>%
+  filter(!is.na(`Marital status`)) %>%
+  filter(`Political party affiliation` %in% parties) %>%
+  mutate(Happy = ifelse(`General happiness` == "Very happy" | 
+                        `General happiness` == "Pretty happy", "Happy", "Unhappy")) %>%
+  mutate(Party = ifelse(`Political party affiliation` %in% ind, "Independent", 
+                 ifelse(`Political party affiliation` %in% rep, "Republican", "Democrat"))) %>%
+  ggplot(aes(fill=Happy, x=factor(`Marital status`, levels=pull(percHappy, `Marital status`)))) + 
+  geom_bar(position="fill") + 
+  labs(title="Percentage of Happy Partners by Marital Status and Political Party", 
+       x="Marital Status", y="Percentage") +
+  theme(axis.text.x = element_text(angle=90)) +
+  facet_wrap(~ Party)
+
+data %>%
+  filter(!is.na(`Marital status`)) %>%
+  filter(`Political party affiliation` %in% parties) %>%
+  mutate(Happy = ifelse(`General happiness` == "Very happy" | 
+                        `General happiness` == "Pretty happy", "Happy", "Unhappy")) %>%
+  mutate(Party = ifelse(`Political party affiliation` %in% ind, "Independent", 
+                 ifelse(`Political party affiliation` %in% rep, "Republican", "Democrat"))) %>%
+  group_by(`Marital status`, Party) %>%
+  summarize(`Percentage of group that is happy` = 100 * length(Happy[which(Happy == "Happy")]) / n(), 
+            .groups="drop_last") %>%
+  arrange(desc(`Percentage of group that is happy`))
+```
+
+A respondent's political party affiliation does not affect the overall trends seen in the data for the previous question. The married group was the happiest in all political parties, while those that gave no answer were the least happy. It is interesting to note, however, that overall, a larger proportion of Independents and Democrats were unhappy when compared to Republicans. As can be seen in the tibble, a greater percentage of widowed Republicans were happier when compared to never married Independents and Democrats. Divorced Republicans were happier than never married Independents, as well as widowed Independents and Democrats.
 
 5. How is marital status related to the education of a respondent? What are possible reasons accounting for the patterns you see?
 
+```{r}
+data %>% 
+  filter(!is.na(`Marital status`)) %>%
+  group_by(`Marital status`) %>%
+  summarize(`Average years of education` = mean(`Highest year of school completed`, na.rm=TRUE)) %>%
+  arrange(desc(`Average years of education`))
+
+data %>% 
+  filter(!is.na(`Marital status`)) %>%
+  group_by(`Marital status`) %>%
+  summarize(mean = mean(`Highest year of school completed`, na.rm=TRUE)) %>%
+  ggplot(aes(x=reorder(`Marital status`, -mean), weight=mean)) + 
+  geom_bar() + 
+  labs(title="Education Level By Marital Status", x="Marital Status", y="Average years of education")
+
+data %>% 
+  filter(!is.na(`Marital status`)) %>%
+  filter(!is.na(`Highest year of school completed`)) %>%
+  ggplot(aes(x=factor(`Marital status`, levels=pull(aveEdu, `Marital status`)), y=`Highest year of school completed`)) + 
+  geom_boxplot() + 
+  labs(title="Education Level By Marital Status", x="Marital Status", y="Years of education")
+```
+
+Respondents who gave no answer for their marital status had by far the highest average level of education of 15.5 years. Those who were never married, divorced, or currently married all had around the same average level of education, 13.0, 13.1, and 13.4 years respectively. Respondents who were separated or widowed had the lowest average level of education, 11.9 and 11.2 years respectively. 
+
 6. Explore two more interesting questions, and answer those questions using the GSS data.
+```{r}
+data1 <- filter(data, `Ever work as long as one year` != "Don't know")
+data1 <- filter(data1, `Ever work as long as one year` != "No answer")
+data1 <- filter(data1, `Ever work as long as one year` != "Not applicable")
+ggplot(data1, aes(x = `Highest year of school completed`)) + geom_histogram() + facet_wrap(~`Ever work as long as one year`) + labs(x= "Highest Schooling", y = "Count", title = "Highest Schooling v. Being at a Career Longer than a Year")
+```
+
+We can see from this histogram that individuals who have work at a job for longer than a year tend to have higher amounts of schooling completed. Also, the people who have worked at a career for longer than a year tend to have more than 12 years of education, equivalent to a high school diploma.
