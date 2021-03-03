@@ -1,0 +1,72 @@
+---
+title: "individual1"
+author: "Brandon Rouse"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message = FALSE}
+library(ggplot2)
+library(dplyr)
+dat <- readxl::read_xls('GSS.xls')
+dat <- select(dat, c(3,4,5,6,7,8))
+dat <- dat %>% rename(work=1, marital = 2, highest.school = 3, political.party = 4, happy = 5, income = 6)
+dat$highest.school <- as.numeric(dat$highest.school)
+head(dat)
+```
+
+## Exploration
+1. Find the average years of education for the respondents with each marital status. Arrange your output in a meaningful order and print. Describe any patterns you find.
+
+```{r}
+dat1 <- filter(dat, marital != "No answer")
+dat1 %>% group_by(marital) %>% summarize(mean_education = mean(highest.school, na.rm = TRUE)) %>% arrange(mean_education)
+```
+
+We can see from this grouping that individuals that have never been married led the way with 13.4 average years of education completed. There was one group ahead of them, but they didn't answer to the marital status, so we don't know which category they fit into. The next highest is divored, closely followed by marries. The least educated came from the widows. 
+
+2. Create a single data frame containing records for the better educated respondents with each marital status. A “better educated” respondent is someone who has strictly more years of education than the average among those with the same marital status. Print the structure of the data frame.
+
+```{r}
+dat %>% group_by(marital) %>% filter(highest.school > mean(highest.school, na.rm = TRUE)) %>% str()
+```
+
+3. How is the happiness of a respondent related to his/her marriage status? Define that a person is happy if the response to question is “Very happy” or “Pretty happy”.
+
+```{r}
+dat2 <- filter(dat, marital != "No answer")
+dat2 <- filter(dat2, marital != "NA")
+dat2 <- mutate(dat2, married.happy = ifelse(happy == 'Very Happy' | happy == 'Pretty happy', 'Yes', 'No'))
+ggplot(dat2, aes(x = marital, fill = married.happy)) + geom_bar(position = position_dodge()) + labs(x = "Marital Status", y = "Count", title = "Marital Status v. Happiness")
+```
+
+From this graph, we can see that marital status doesn't really have a relationship to their marital status. 
+
+4. Does party affiliation affect the relationship you found in the last question?
+
+```{r}
+dat3 <- filter(dat, political.party != "Don't know")
+dat3 <- filter(dat3, political.party != "No answer")
+dat3 <- mutate(dat3, married.happy = ifelse(happy == 'Very Happy' | happy == 'Pretty happy', 'Yes', 'No'))
+ggplot(dat3, aes(x = marital, fill = married.happy)) + geom_bar(position = position_dodge()) + facet_wrap(~ political.party, scales = "free_y") + labs(x = "Marital Status", y = "Count", title = "Marital Status v. Happiness") 
+```
+
+5. How is marital status related to the education of a respondent? What are possible reasons accounting for the patterns you see?
+
+```{r}
+dat4 <- filter(dat, marital != "NA")
+dat4 <- filter(dat4, marital != "No answer")
+ggplot(dat4, aes(x = highest.school)) + geom_histogram() + facet_wrap(~marital, scales = "free_y")
+```
+
+6. Explore two more interesting questions, and answer those questions using the GSS data.
+
+```{r}
+dat5 <- filter(dat, work != "Don't know")
+dat5 <- filter(dat5, work != "No answer")
+dat5 <- filter(dat5, work != "Not applicable")
+ggplot(dat5, aes(x = highest.school)) + geom_histogram() + facet_wrap(~work)
+```
