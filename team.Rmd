@@ -153,3 +153,48 @@ ggplot(data1, aes(x = `Highest year of school completed`)) + geom_histogram() + 
 ```
 
 We can see from this histogram that individuals who have work at a job for longer than a year tend to have higher amounts of schooling completed. We can see from the averages that the 'yes' group has an average equivalent to a high school diploma. The 'no' group has an average that is less than a high school diploma. The two groups 'not applicable' and 'no answer' have the highest average, but we don't know which category they fall under. Because of this, we can assume that people with higher years completed of education tend to have careers lasting longer than a year. 
+
+
+
+```{r}
+yesno <- c("Yes", "No")
+
+data %>%
+  filter(`Belief in life after death` %in% yesno) %>%
+  mutate(Happy = ifelse(`General happiness` == "Very happy" | 
+                        `General happiness` == "Pretty happy", "Happy", "Unhappy")) %>%
+  group_by(`Gss year for this respondent`, `Belief in life after death`) %>%
+  summarize(`Percentage happy` = 100 * length(Happy[which(Happy == "Happy")]) / n(), .groups="drop_last") %>%
+  ggplot(aes(x=`Gss year for this respondent`, y=`Percentage happy`, color=`Belief in life after death`)) +
+  geom_line() + 
+  labs(title="Happiness Over Time Based On Belief in the Afterlife", x="Year", y="Percentage of Respondents Who Were Happy")
+
+noData <- data %>%
+  filter(`Belief in life after death` %in% yesno) %>%
+  mutate(Happy = ifelse(`General happiness` == "Very happy" | 
+                        `General happiness` == "Pretty happy", "Happy", "Unhappy")) %>%
+  group_by(`Gss year for this respondent`, `Belief in life after death`) %>%
+  summarize(`Percentage happy` = 100 * length(Happy[which(Happy == "Happy")]) / n(), 
+            .groups="drop_last") %>%
+  filter(`Belief in life after death` == "No")
+
+yesData <- data %>%
+  filter(`Belief in life after death` %in% yesno) %>%
+  mutate(Happy = ifelse(`General happiness` == "Very happy" | 
+                          `General happiness` == "Pretty happy", "Happy", "Unhappy")) %>%
+  group_by(`Gss year for this respondent`, `Belief in life after death`) %>%
+  summarize(`Percentage happy` = 100 * length(Happy[which(Happy == "Happy")]) / n(), 
+            .groups="drop_last") %>%
+  filter(`Belief in life after death` == "Yes")
+
+changeInNo <- (last(noData %>% pull(`Percentage happy`)) - first(noData %>% pull(`Percentage happy`))) / 
+  (last(noData %>% pull(`Gss year for this respondent`)) - first(noData %>% pull(`Gss year for this respondent`))) * 100
+changeInYes <- (last(yesData %>% pull(`Percentage happy`)) - first(yesData %>% pull(`Percentage happy`))) / 
+  (last(yesData %>% pull(`Gss year for this respondent`)) - first(yesData %>% pull(`Gss year for this respondent`))) * 100
+percentChangeInHappiness <- c(changeInNo, changeInYes)
+names(percentChangeInHappiness) <- c("Don't believe in afterlife", "Believe in afterlife")
+
+percentChangeInHappiness
+```
+
+This investigation looks at how people's belief in life after death has affected their happiness over time. A person was considered to be `Happy` if they responded to the questionnaire that they considered themselves to be either `Very happy` or `Pretty happy`. As you can see in the graph, those that do believe in life after death, on average have a significantly higher chance of being happy. There is only one point on the graph where those that don't believe in life after death have a higher chance of being happier, just around 1991. People that believe in life after death may often be happier because their religious beliefs make them happy in their day-to-day lives. In addition, although the happiness of both groups of people varies greatly with time, they generally have the same shape, meaning that the happiness of the general population often changes as a whole. There are a few exceptions to this, where the happiness of the those who don't believe in life after death steeply dropped without a similar change from those who do believe in the afterlife. This occurred around 1975, 1984, and 2004. People that don't believe in the afterlife may have a more volatile level of happiness because they may be afraid of death, as opposed to people who think they will still have a life after death.
